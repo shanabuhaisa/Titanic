@@ -4,7 +4,7 @@ This project is a full walkthrough of the **Titanic** CTF box. It demonstrates t
 
 ## 🌐 Live Walkthrough Page
 
-🔗 [View the Webpage](https://shanabuhaisa.github.io/Titanic/)
+🔗 [View the Webpage](https://shanabuhaisa.github.io/Titanic/Titanic_Walkthrough.html)
 
 > Hosted using GitHub Pages.
 
